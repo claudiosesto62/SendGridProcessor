@@ -20,7 +20,7 @@ namespace SendGridProcessor.Controllers
         private static async Task MailToSG(string mensaje, string paraStr)
         {
             var arrFrom = paraStr.Split("<");
-            var apiKey = "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"; //Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+            var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY"); // "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"; //Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
             var client = new SendGridClient(apiKey);
             var from = new EmailAddress("csesto@planexware.com", "Canal de Email"); // tiene que ser un sender declarado en el dashboard
             var subject = "Planexware te Responde";

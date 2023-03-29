@@ -12,4 +12,5 @@ namespace SendGridProcessor.Configuration
         public string AttachmentName { get; set; }
         public string FolderName { get; set; }
     }
+
 }

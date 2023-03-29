@@ -2,11 +2,14 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using SendGridProcessor.Configuration;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System.IO;
+using System;
+using Cloudmersive.APIClient.NETCore.VirusScan.Api;
+using Cloudmersive.APIClient.NETCore.VirusScan.Client;
+using Cloudmersive.APIClient.NETCore.VirusScan.Model;
 
 namespace SendGridProcessor.Controllers
 {
@@ -17,10 +20,41 @@ namespace SendGridProcessor.Controllers
         private const string FilesRootPath = "C:\\dev\\SendGridFiles";
         private List<EmailRule> _rules = new List<EmailRule>(); // cs con los parametros a incluir
 
+        private bool VirusCheck(System.IO.Stream inputFile)
+        {
+            var apiInstance = new ScanApi();
+            // Configure API key authorization: Apikey
+            //Configuration.AddApiKey = "33b4df6a-6c51-48f6-bdfd-63925e3dd8c0";
+            apiInstance.Configuration.AddApiKey("Apikey", "33b4df6a-6c51-48f6-bdfd-63925e3dd8c0");
+            // Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+           // apiInstance.Configuration.AddApiKeyPrefix("Apikey", "Bearer");
+
+
+
+
+            // var inputFile = new System.IO.Stream(); // System.IO.Stream | Input file to perform the operation on.
+
+            try
+            {
+                // Scan a file for viruses
+                VirusScanResult result = apiInstance.ScanFile(inputFile);
+                //Debug.WriteLine(result);
+                Console.WriteLine(result);
+                return true;
+
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception when calling ScanApi.ScanFile: " + e.Message);
+                return false;
+            }
+        }
+
         private static async Task MailToSG(string mensaje, string paraStr)
         {
             var arrFrom = paraStr.Split("<");
-            var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY"); // "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"; //Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+            var apiKey = "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";// Environment.GetEnvironmentVariable("SENDGRID_API_KEY"); // "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"; //Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
             var client = new SendGridClient(apiKey);
             var from = new EmailAddress("csesto@planexware.com", "Canal de Email"); // tiene que ser un sender declarado en el dashboard
             var subject = "Planexware te Responde";
@@ -85,9 +119,14 @@ namespace SendGridProcessor.Controllers
                         foreach (EmailRule ruleAvailable in rulesAvailables) //lo guarda en el directorio de la policy
                         {
                             string filePath = Path.Combine(FilesRootPath, ruleAvailable.FolderName, file.FileName);
-                            using var inputStream = new FileStream(filePath, FileMode.Create);
-                            // read file to stream
-                            await file.CopyToAsync(inputStream); // se guarda en el directorio de la policy con el nombre del attach (sobreescribe)
+                                var iStream = file.OpenReadStream(); //creo el stream para chek de virus en cloudmersive
+                             
+                                if ( VirusCheck(iStream))
+                                {
+                                    using var inputStream = new FileStream(filePath, FileMode.Create); 
+                                    await file.CopyToAsync(inputStream);
+                                }
+                            //; // se guarda en el directorio de la policy con el nombre del attach (sobreescribe)
                         }
                     }
                     }
